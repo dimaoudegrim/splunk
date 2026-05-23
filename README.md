@@ -3,6 +3,7 @@ Splunk config files for cluster home lab. The config files not including apps as
 This repo made for demonstration only and not sure that will fit your production environment. Please check carefully what is fitting you here. Most of traffic here is NOT ENCRYPTED BY ENTERPRISE STANDARDS!, neither the Forwarders, sc4s, splunkd, except the web pages. As this is a home lab.
 ---
 From my home lab with Splunk Enterprise clusters with ES, as a testing environment for my enterprise clients. Build on Vmware workstation pro as VM'S (14 VM'S) on two old computers that most of the time turned off for electricity saving. But can be turned on remotely.
+This lab is Used for testing my clients specific configuration and requirements as needed.
 ---
 •	14 VM's in clusters mode.
 -	Cluster manager.
