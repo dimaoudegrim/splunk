@@ -1,2 +1,2 @@
 # splunk
-splunk config files
+Splunk config files for cluster home lab 
