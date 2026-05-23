@@ -14,6 +14,7 @@ Splunk Enterprise clusters with ES, as a testing environment for my enterprise c
 -	Heavy forwarder
 -	Linux VM for sending logs by UF, and also syslog by Rsyslog to SC4S.
 -	Windows VM for sending logs by UF, and also Syslog to SC4S by solarwinds event forwarder -> Kiwi Syslog server -> SC4S -> Splunk (Mimic air-gapped environment).
+---
 •	Custom architecture for the implementation.
 -	Using Raspberry pi on the same network for using wake on lan to turn on the computers (hosts).
 -	Each VM gets a static IP by DHCP from check point firewall.
