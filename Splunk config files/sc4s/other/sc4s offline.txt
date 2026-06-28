@@ -1,0 +1,222 @@
+Guide to connect log sources to sc4s while installing offline - example linux from rsyslog
+
+a. ----on indexr - create a hec.----
+
+b . on the indexer create the following indexes:
+email
+epav
+fireeye
+gitops
+infraops
+netauth
+netdlp
+netdns
+netfw
+netids
+netops
+netwaf
+netproxy
+netipam
+oswinsec
+osnix
+
+[email]
+coldPath = $SPLUNK_DB/email/colddb
+homePath = $SPLUNK_DB/email/db
+thawedPath = $SPLUNK_DB/email/thaweddb
+
+[epav]
+coldPath = $SPLUNK_DB/epav/colddb
+homePath = $SPLUNK_DB/epav/db
+thawedPath = $SPLUNK_DB/epav/thaweddb
+
+[fireeye]
+coldPath = $SPLUNK_DB/fireeye/colddb
+homePath = $SPLUNK_DB/fireeye/db
+thawedPath = $SPLUNK_DB/fireeye/thaweddb
+
+[gitops]
+coldPath = $SPLUNK_DB/gitops/colddb
+homePath = $SPLUNK_DB/gitops/db
+thawedPath = $SPLUNK_DB/gitops/thaweddb
+
+[infraops]
+coldPath = $SPLUNK_DB/infraops/colddb
+homePath = $SPLUNK_DB/infraops/db
+thawedPath = $SPLUNK_DB/infraops/thaweddb
+
+[netauth]
+coldPath = $SPLUNK_DB/netauth/colddb
+homePath = $SPLUNK_DB/netauth/db
+thawedPath = $SPLUNK_DB/netauth/thaweddb
+
+[netdlp]
+coldPath = $SPLUNK_DB/netdlp/colddb
+homePath = $SPLUNK_DB/netdlp/db
+thawedPath = $SPLUNK_DB/netdlp/thaweddb
+
+[netdns]
+coldPath = $SPLUNK_DB/netdns/colddb
+homePath = $SPLUNK_DB/netdns/db
+thawedPath = $SPLUNK_DB/netdns/thaweddb
+
+[netfw]
+coldPath = $SPLUNK_DB/netfw/colddb
+homePath = $SPLUNK_DB/netfw/db
+thawedPath = $SPLUNK_DB/netfw/thaweddb
+
+[netids]
+coldPath = $SPLUNK_DB/netids/colddb
+homePath = $SPLUNK_DB/netids/db
+thawedPath = $SPLUNK_DB/netids/thaweddb
+
+[netops]
+coldPath = $SPLUNK_DB/netops/colddb
+homePath = $SPLUNK_DB/netops/db
+thawedPath = $SPLUNK_DB/netops/thaweddb
+
+[netwaf]
+coldPath = $SPLUNK_DB/netwaf/colddb
+homePath = $SPLUNK_DB/netwaf/db
+thawedPath = $SPLUNK_DB/netwaf/thaweddb
+
+[netproxy]
+coldPath = $SPLUNK_DB/netproxy/colddb
+homePath = $SPLUNK_DB/netproxy/db
+thawedPath = $SPLUNK_DB/netproxy/thaweddb
+
+[netipam]
+coldPath = $SPLUNK_DB/netipam/colddb
+homePath = $SPLUNK_DB/netipam/db
+thawedPath = $SPLUNK_DB/netipam/thaweddb
+
+[oswinsec]
+coldPath = $SPLUNK_DB/oswinsec/colddb
+homePath = $SPLUNK_DB/oswinsec/db
+thawedPath = $SPLUNK_DB/oswinsec/thaweddb
+
+[osnix]
+coldPath = $SPLUNK_DB/osnix/colddb
+homePath = $SPLUNK_DB/osnix/db
+thawedPath = $SPLUNK_DB/osnix/thaweddb
+
+----------------------------------
+
+-------------On sc4s---------------
+----------------------------------
+-------------------------------------
+-----------------------------------
+
+on sc4s server
+
+1. apt install podman -y
+2. nano /etc/sysctl.conf
+
+net.core.rmem_default = 17039360
+net.core.rmem_max = 17039360
+
+3. sysctl -p
+
+4. . on some os like centos on aws, you should Configure IPv4 forwarding/
+To check that IPv4 forwarding is enabled: sudo sysctl net.ipv4.ip_forward
+
+Define sysctl settings through files in /usr/lib/sysctl.d/, /run/sysctl.d/, and /etc/sysctl.d/. 
+
+net.ipv4.ip_forward=1
+
+5. download the sc4s image and change to the needed version. than copy the image to the sc4s server.
+
+sudo wget https://github.com/splunk/splunk-connect-for-syslog/releases/download/v3.41.0/oci_container.tar.gz
+
+6. enter the location of the copied sc4s image
+7. podman load < oci_container.tar.gz
+8 after the previous command you should get a notification that looks like:
+Loaded image: ghcr.io/splunk/splunk-connect-for-syslog/container3:3.41.0
+copy it.
+8. create a tag by using previous output and add a tag. like this:
+
+podman tag ghcr.io/splunk/splunk-connect-for-syslog/container3:3.41.0 sc4slocal:latest
+
+6. create a service. Notice that Environment value is different from online version, and ExecStartPre line is removed here
+
+6.1. nano /lib/systemd/system/sc4s.service
+
+[Unit]
+Description=SC4S Container
+Wants=NetworkManager.service network-online.target
+After=NetworkManager.service network-online.target
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Environment="SC4S_IMAGE=sc4slocal:latest"
+
+# Required mount point for syslog-ng persist data (including disk buffer)
+Environment="SC4S_PERSIST_MOUNT=splunk-sc4s-var:/var/lib/syslog-ng"
+
+# Optional mount point for local overrides and configurations; see notes in docs
+Environment="SC4S_LOCAL_MOUNT=/opt/sc4s/local:/etc/syslog-ng/conf.d/local:z"
+
+# Optional mount point for local disk archive (EWMM output) files
+Environment="SC4S_ARCHIVE_MOUNT=/opt/sc4s/archive:/var/lib/syslog-ng/archive:z"
+
+# Map location of TLS custom TLS
+Environment="SC4S_TLS_MOUNT=/opt/sc4s/tls:/etc/syslog-ng/tls:z"
+
+TimeoutStartSec=0
+
+# Note: /usr/bin/bash will not be valid path for all OS
+# when startup fails on running bash check if the path is correct
+ExecStartPre=/usr/bin/bash -c "/usr/bin/systemctl set-environment SC4SHOST=$(hostname -s)"
+
+# Note: Prevent the error 'The container name "/SC4S" is already in use by container <container_id>. You have to remove (or rename) that container to be able to reuse that name.'
+ExecStartPre=/usr/bin/bash -c "/usr/bin/podman rm SC4S > /dev/null 2>&1 || true"
+ExecStart=/usr/bin/podman run \
+        -e "SC4S_CONTAINER_HOST=${SC4SHOST}" \
+        -v "$SC4S_PERSIST_MOUNT" \
+        -v "$SC4S_LOCAL_MOUNT" \
+        -v "$SC4S_ARCHIVE_MOUNT" \
+        -v "$SC4S_TLS_MOUNT" \
+        --env-file=/opt/sc4s/env_file \
+        --health-cmd="/usr/sbin/syslog-ng-ctl healthcheck --timeout 5" \
+        --health-interval=2m --health-retries=6 --health-timeout=5s \
+        --network host \
+        --name SC4S \
+        --rm $SC4S_IMAGE
+
+Restart=on-failure
+
+7. podman volume create splunk-sc4s-var
+8. mkdir /opt/sc4s/
+9. mkdir /opt/sc4s/local
+10. mkdir /opt/sc4s/archive
+11. mkdir /opt/sc4s/tls
+
+12. nano /opt/sc4s/env_file
+SC4S_DEST_SPLUNK_HEC_DEFAULT_URL=https://your.splunk.instance:8088
+SC4S_DEST_SPLUNK_HEC_DEFAULT_TOKEN=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+#Uncomment the following line if using untrusted SSL certificates
+#SC4S_DEST_SPLUNK_HEC_DEFAULT_TLS_VERIFY=no
+SC4S_USE_REVERSE_DNS=yes
+SC4S_LISTEN_CUSTOM_PORT520_UDP_PORT=520
+
+13. sudo systemctl daemon-reload
+14. sudo systemctl enable sc4s
+15. sudo systemctl start sc4s
+
+16. nano /opt/sc4s/local/context/compliance_meta_by_source.conf
+filter f_linux {
+	match("520", value("fields.sc4s_destport") type(glob));
+};
+
+17. nano /opt/sc4s/local/context/compliance_meta_by_source.csv
+f_linux,.splunk.index,"linux_sc4s"
+f_linux,.splunk.sourcetype,"syslog"
+
+18. systemctl restart sc4s.service
+
+
+
+
+

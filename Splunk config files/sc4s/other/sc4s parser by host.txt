@@ -1,0 +1,26 @@
+parser based on message.
+---- will check file name pattern later----
+/opt/sc4s/local/config/app_parser/syslog/
+
+content:
+
+block parser nutanix () {
+channel {
+	rewrite {
+		r_set_splunk_dest_default(
+			index("nutanix")
+			sourcetype('nutanix_syslog')
+			vendor("nutanix")
+			product("fmc")
+			template("t_standard")
+	
+		);
+	};
+	};
+};
+application nutanix-p[sc4s-network-source] {
+	filter {
+	host("ntnx-h1h1h1" type(glob) or host("ntnx-jfbjb" type(glob)
+};
+	parser { nutanix-parser(); };
+};

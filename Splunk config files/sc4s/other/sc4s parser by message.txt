@@ -1,0 +1,26 @@
+parser based on message.
+file name: app-secusys.conf
+path: /opt/sc4s/local/config/app_parser/syslog/app-secusys.conf
+content:
+
+block parser secusys-parser () {
+channel {
+	rewrite {
+		r_set_splunk_dest_default(
+			index("secusys")
+			sourcetype('secusys')
+			vendor("secusys")
+			product("secusys")
+		
+	
+		);
+	};
+	};
+};
+application secusys-p[sc4s-syslog] {
+	filter {
+	message("Controller: Cyber Fingerprint reader") or message("Controller: someone fingerprint")
+
+};
+	parser { secusys-parser(); };
+};

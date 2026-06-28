@@ -1,0 +1,25 @@
+parser based on prefix.
+file name : app-syslog-cisco_fmc.conf
+path: /opt/sc4s/local/config/app_parser/syslog/app-syslog-cisco_fmc.conf
+
+content:
+
+block parser app-syslog-cisco-fmc () {
+channel {
+	rewrite {
+		r_set_splunk_dest_default(
+			index("cisco_fmc")
+			sourcetype('cisco:fmc')
+			vendor("cisco")
+			product('fmc')
+	
+		);
+	};
+	};
+};
+application app-syslog-cisco_fmc[sc4s-syslog] {
+	filter {
+	message('FMC' type(string) flags(prefix)) or message("FMC-OTHER")
+};
+	parser { app-syslog-cisco_fmc(); };
+};
